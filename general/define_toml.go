@@ -19,27 +19,27 @@ import (
 
 // 一般需要提供的配置
 var (
-	Host            = "127.0.0.1"      // 默认 MQTT 服务地址
-	Port            = 1883             // 默认 MQTT 服务端口
-	Username        = ""               // 默认用户名
-	Password        = ""               // 默认密码
-	PublishTopics   = []string{"test"} // 默认发布主题
-	SubscribeTopics = []string{"test"} // 默认订阅主题
+	Host           = "127.0.0.1"
+	Port           = 1883
+	Username       = ""
+	Password       = ""
+	PublishTopic   = []string{"test"}
+	SubscribeTopic = []string{"test"}
 )
 
 // 用于转换 Toml 配置树的结构体
 type Config struct {
-	Host            string   `toml:"host"`
-	Port            int      `toml:"port"`
-	Username        string   `toml:"username"`
-	password        string   `toml:"password"`
-	ClientID        string   `toml:"client_id"`
-	PublishTopics   []string `toml:"publish_topics"`
-	SubscribeTopics []string `toml:"subscribe_topics"`
-	QoS             int      `toml:"qos"`
-	Retain          bool     `toml:"retain"`
-	CleanSession    bool     `toml:"clean_session"`
-	Wait            int      `toml:"wait"`
+	Host           string   `toml:"host"`            // MQTT 服务地址
+	Port           int      `toml:"port"`            // MQTT 服务端口
+	Username       string   `toml:"username"`        // 用户名
+	Password       string   `toml:"password"`        // 密码
+	ClientID       string   `toml:"client_id"`       // 客户端 ID，留空时自动生成随机 ID
+	PublishTopic   []string `toml:"publish_topic"`   // 发布主题
+	SubscribeTopic []string `toml:"subscribe_topic"` // 订阅主题
+	QoS            int      `toml:"qos"`             // 服务质量，0/1/2
+	Retain         bool     `toml:"retain"`          // 是否保留最后一条消息
+	CleanSession   bool     `toml:"clean_session"`   // 是否清空会话
+	Wait           int      `toml:"wait"`            // 连接等待时间
 }
 
 // isTomlFile 检测文件是不是 toml 文件
@@ -112,37 +112,41 @@ func WriteTomlConfig(filePath string) (int64, error) {
 		Wait         = 5
 	)
 
-	// 定义一个 map[string]any 类型的变量并赋值
-	exampleConf := map[string]any{
-		"host":             Host,            // MQTT 服务地址
-		"port":             Port,            // MQTT 服务端口
-		"username":         Username,        // 用户名
-		"password":         Password,        // 密码
-		"client_id":        ClientID,        // 客户端 ID，留空时自动生成
-		"publish_topics":   PublishTopics,   // 发布主题,
-		"subscribe_topics": SubscribeTopics, // 订阅主题
-		"qos":              QoS,             // 服务质量，0/1/2
-		"retain":           Retain,          // 是否保留最后一条消息
-		"clean_session":    CleanSession,    // 是否清除会话
-		"wait":             Wait,            // 连接等待时间
+	config := Config{
+		Host:           Host,
+		Port:           Port,
+		Username:       Username,
+		Password:       Password,
+		ClientID:       ClientID,
+		PublishTopic:   PublishTopic,
+		SubscribeTopic: SubscribeTopic,
+		QoS:            QoS,
+		Retain:         Retain,
+		CleanSession:   CleanSession,
+		Wait:           Wait,
 	}
-	// 检测配置文件是否存在
-	if !FileExist(filePath) {
-		return 0, fmt.Errorf("Open %s: no such file or directory", filePath)
-	}
-	// 检测配置文件是否是 toml 文件
-	if !isTomlFile(filePath) {
-		return 0, fmt.Errorf("Open %s: is not a toml file", filePath)
-	}
-	// 把 exampleConf 转换为 *toml.Tree 类型
-	tree, err := toml.TreeFromMap(exampleConf)
-	if err != nil {
-		return 0, err
-	}
-	// 打开一个文件并获取 io.Writer 接口
+
+	// 打开配置文件
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return 0, err
 	}
-	return tree.WriteTo(file)
+	defer file.Close()
+
+	// 写入注释
+	n, err := file.WriteString("# MQTT 配置文件\n\n")
+	if err != nil {
+		return int64(n), err
+	}
+
+	// 创建编码器并设置顺序保留
+	encoder := toml.NewEncoder(file)
+	encoder.Order(toml.OrderPreserve)
+
+	if err := encoder.Encode(config); err != nil {
+		return int64(n), err
+	}
+
+	stat, _ := file.Stat()
+	return stat.Size(), nil
 }
