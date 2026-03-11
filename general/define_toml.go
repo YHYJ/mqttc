@@ -17,29 +17,35 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-// 一般需要提供的配置
 var (
+	// 一般需要提供的配置
 	Host           = "127.0.0.1"
 	Port           = 1883
 	Username       = ""
 	Password       = ""
-	PublishTopic   = []string{"test"}
-	SubscribeTopic = []string{"test"}
+	PublishTopic   = "test"
+	SubscribeTopic = "test"
+	// 一般使用默认值即可的配置
+	ClientID     = ""
+	QoS          = 1
+	Timeout      = 5
+	Retain       = false
+	CleanSession = true
 )
 
 // 用于转换 Toml 配置树的结构体
 type Config struct {
-	Host           string   `toml:"host"`            // MQTT 服务地址
-	Port           int      `toml:"port"`            // MQTT 服务端口
-	Username       string   `toml:"username"`        // 用户名
-	Password       string   `toml:"password"`        // 密码
-	ClientID       string   `toml:"client_id"`       // 客户端 ID，留空时自动生成随机 ID
-	PublishTopic   []string `toml:"publish_topic"`   // 发布主题
-	SubscribeTopic []string `toml:"subscribe_topic"` // 订阅主题
-	QoS            int      `toml:"qos"`             // 服务质量，0/1/2
-	Retain         bool     `toml:"retain"`          // 是否保留最后一条消息
-	CleanSession   bool     `toml:"clean_session"`   // 是否清空会话
-	Wait           int      `toml:"wait"`            // 连接等待时间
+	Host           string `toml:"host"`            // MQTT 服务地址
+	Port           int    `toml:"port"`            // MQTT 服务端口
+	Username       string `toml:"username"`        // 用户名
+	Password       string `toml:"password"`        // 密码
+	ClientID       string `toml:"client_id"`       // 客户端 ID，留空时自动生成随机 ID
+	PublishTopic   string `toml:"publish_topic"`   // 发布主题
+	SubscribeTopic string `toml:"subscribe_topic"` // 订阅主题
+	QoS            int    `toml:"qos"`             // 服务质量，0/1/2
+	Timeout        int    `toml:"timeout"`         // 连接超时时间
+	Retain         bool   `toml:"retain"`          // 是否保留最后一条消息
+	CleanSession   bool   `toml:"clean_session"`   // 是否清空会话
 }
 
 // isTomlFile 检测文件是不是 toml 文件
@@ -103,15 +109,6 @@ func LoadConfigToStruct(configTree *toml.Tree) (*Config, error) {
 //   - 写入的字节数
 //   - 错误信息
 func WriteTomlConfig(filePath string) (int64, error) {
-	// 一般使用默认值即可的配置
-	var (
-		ClientID     = ""
-		QoS          = 1
-		Retain       = false
-		CleanSession = true
-		Wait         = 5
-	)
-
 	config := Config{
 		Host:           Host,
 		Port:           Port,
@@ -121,9 +118,9 @@ func WriteTomlConfig(filePath string) (int64, error) {
 		PublishTopic:   PublishTopic,
 		SubscribeTopic: SubscribeTopic,
 		QoS:            QoS,
+		Timeout:        Timeout,
 		Retain:         Retain,
 		CleanSession:   CleanSession,
-		Wait:           Wait,
 	}
 
 	// 打开配置文件

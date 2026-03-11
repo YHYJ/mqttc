@@ -11,6 +11,7 @@ package general
 
 var (
 	ErrorInfoFlag = "•" // 身份符号 - 报错信息
+	WarnInfoFlag  = ">" // 身份符号 - 警告信息
 )
 
 var (

@@ -53,6 +53,8 @@ var (
 	ConfigFile = filepath.Join(configDir, programDir, configFile) // 配置文件路径
 )
 
+var Mode = "" // 程序运行模式
+
 // ---------- 变量相关函数
 
 // GetVariable 获取环境变量

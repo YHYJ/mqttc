@@ -34,7 +34,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("config", general.ConfigFile, "Specify configuration file")
+	rootCmd.PersistentFlags().StringP("config", "c", general.ConfigFile, "Specify configuration file")
 
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().BoolP("help", "h", false, "help for mqttc")
 }

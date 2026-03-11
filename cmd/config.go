@@ -60,5 +60,6 @@ func init() {
 	configCmd.Flags().Bool("print", false, "Print configuration file content")
 
 	configCmd.Flags().BoolP("help", "h", false, "help for config command")
+
 	rootCmd.AddCommand(configCmd)
 }

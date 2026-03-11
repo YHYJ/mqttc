@@ -29,18 +29,19 @@ import (
 //
 // 参数：
 //   - length: 长度
+//   - name: 名称
 //   - prefix: 前缀
 //   - suffix: 后缀
 //
 // 返回：
 //   - 字符串
-func StringGen(length int, prefix string, suffix string) string {
+func StringGen(length int, name string, prefix string, suffix string) string {
 	b := make([]byte, length)
 	if _, err := rand.Read(b); err != nil {
 		// 如果随机失败，回退到基于时间戳生成
-		return fmt.Sprintf("%s-%d-%s", prefix, time.Now().UnixNano(), suffix)
+		return color.Sprintf("%s-%s-%d-%s", name, prefix, time.Now().UnixNano(), suffix)
 	}
-	return prefix + "-" + hex.EncodeToString(b) + "-" + suffix
+	return name + "-" + prefix + "-" + hex.EncodeToString(b) + "-" + suffix
 }
 
 // AreYouSure 获取用户二次确认
