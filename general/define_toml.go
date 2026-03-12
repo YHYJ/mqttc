@@ -13,24 +13,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/gookit/color"
 	"github.com/pelletier/go-toml"
-)
-
-var (
-	// 一般需要提供的配置
-	Host           = "127.0.0.1"
-	Port           = 1883
-	Username       = ""
-	Password       = ""
-	PublishTopic   = "test"
-	SubscribeTopic = "test"
-	// 一般使用默认值即可的配置
-	ClientID     = ""
-	QoS          = 1
-	Timeout      = 5
-	Retain       = false
-	CleanSession = true
 )
 
 // 用于转换 Toml 配置树的结构体
@@ -46,6 +32,38 @@ type Config struct {
 	Timeout        int    `toml:"timeout"`         // 连接超时时间
 	Retain         bool   `toml:"retain"`          // 是否保留最后一条消息
 	CleanSession   bool   `toml:"clean_session"`   // 是否清空会话
+}
+
+// 配置项
+var (
+	// 允许用户修改的配置项
+	Host           = "127.0.0.1"
+	Port           = 1883
+	Username       = ""
+	Password       = ""
+	PublishTopic   = "test"
+	SubscribeTopic = "test"
+	// 使用默认值的配置项（这里保持首字母大写是因为命令行参数需要）
+	ClientID     = ""
+	QoS          = 1
+	Timeout      = 5
+	Retain       = false
+	CleanSession = true
+)
+
+// 配置
+var appConfig = Config{
+	Host:           Host,
+	Port:           Port,
+	Username:       Username,
+	Password:       Password,
+	ClientID:       ClientID,
+	PublishTopic:   PublishTopic,
+	SubscribeTopic: SubscribeTopic,
+	QoS:            QoS,
+	Timeout:        Timeout,
+	Retain:         Retain,
+	CleanSession:   CleanSession,
 }
 
 // isTomlFile 检测文件是不是 toml 文件
@@ -109,20 +127,6 @@ func LoadConfigToStruct(configTree *toml.Tree) (*Config, error) {
 //   - 写入的字节数
 //   - 错误信息
 func WriteTomlConfig(filePath string) (int64, error) {
-	config := Config{
-		Host:           Host,
-		Port:           Port,
-		Username:       Username,
-		Password:       Password,
-		ClientID:       ClientID,
-		PublishTopic:   PublishTopic,
-		SubscribeTopic: SubscribeTopic,
-		QoS:            QoS,
-		Timeout:        Timeout,
-		Retain:         Retain,
-		CleanSession:   CleanSession,
-	}
-
 	// 打开配置文件
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
@@ -131,7 +135,8 @@ func WriteTomlConfig(filePath string) (int64, error) {
 	defer file.Close()
 
 	// 写入注释
-	n, err := file.WriteString("# MQTT 配置文件\n\n")
+	manual := color.Sprintf("##\n## %s - %s\n## Generaled on %s\n##\n\n", Name, Version, time.Now().Format("2006-01-02 15:04:05"))
+	n, err := file.WriteString(manual)
 	if err != nil {
 		return int64(n), err
 	}
@@ -140,7 +145,7 @@ func WriteTomlConfig(filePath string) (int64, error) {
 	encoder := toml.NewEncoder(file)
 	encoder.Order(toml.OrderPreserve)
 
-	if err := encoder.Encode(config); err != nil {
+	if err := encoder.Encode(appConfig); err != nil {
 		return int64(n), err
 	}
 
